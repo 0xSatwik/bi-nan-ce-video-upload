@@ -33,7 +33,7 @@ jobs:
         pip install git+https://github.com/myshell-ai/MeloTTS.git --no-deps
         
         # Stage 3: Install OpenVoice without deps (avoid broken av==10.*/faster-whisper==0.9.0)
-        pip install git+https://github.com/myshell-ai/OpenVoice.git@v2 --no-deps
+        pip install git+https://github.com/myshell-ai/OpenVoice.git --no-deps
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
