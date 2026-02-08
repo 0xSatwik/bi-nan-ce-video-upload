@@ -195,25 +195,46 @@ test('record video', async () => {
     // Scene 4: Answer Today
     console.log("Scene 4: Answer Today");
 
-    // Find link
-    const answerLink = page.getByRole('link', { name: 'Binance WOTD Answer Today' });
-    if (await answerLink.isVisible()) {
+    // Fix: Use correct link text/href
+    // Trying generic text match or exact href
+    const answerLink = page.getByRole('link', { name: /Binance wotd answer/i }).first();
+    const answerHref = '/binance-wotd-answer-today';
+    const linkByHref = page.locator(`a[href="${answerHref}"]`);
+
+    let answerPageReached = false;
+
+    if (await answerLink.count() > 0 && await answerLink.isVisible()) {
         await answerLink.scrollIntoViewIfNeeded();
         await page.waitForTimeout(500);
         await answerLink.hover();
         await page.waitForTimeout(500);
         await answerLink.click();
-        await page.waitForLoadState('domcontentloaded');
+        answerPageReached = true;
+    } else if (await linkByHref.count() > 0 && await linkByHref.isVisible()) {
+        console.log("Using href selector for Answer Link");
+        await linkByHref.scrollIntoViewIfNeeded();
+        await linkByHref.click();
+        answerPageReached = true;
     } else {
         console.warn("Answer Today link not found, forcing navigation");
         await page.goto('https://cryptowalletsx.com/binance-wotd-answer-today', { waitUntil: 'domcontentloaded' });
+        answerPageReached = true;
     }
 
+    await page.waitForLoadState('domcontentloaded');
     await waitForAudio(page, 'nav_answers', 5);
 
     // Scene 5: Reveal Answers
     console.log("Scene 5: Reveal Answers");
-    const revealButtons = page.getByRole('button', { name: /Reveal/i });
+
+    // Wait for content (skeleton loader to go away)
+    try {
+        await page.waitForSelector('button:has-text("Reveal")', { timeout: 10000 });
+    } catch (e) {
+        console.warn("Reveal buttons did not appear in time");
+    }
+
+    const revealButtons = page.locator('button:has-text("Reveal")');
     const count = await revealButtons.count();
 
     if (count > 0) {
@@ -241,20 +262,24 @@ test('record video', async () => {
     await context.close();
     await browser.close();
 
-    // Rename the video file
+    // Rename the video file to a fixed name for processing
     const videoDir = 'video';
     if (fs.existsSync(videoDir)) {
         const files = fs.readdirSync(videoDir);
-        // Get latest file
-        const latestFile = files.filter(f => f.endsWith('.webm')).sort((a, b) => {
+        // Get latest file (excluding the fixed name if it exists)
+        const latestFile = files.filter(f => f.endsWith('.webm') && f !== 'recording.webm').sort((a, b) => {
             return fs.statSync(path.join(videoDir, b)).mtime.getTime() -
                 fs.statSync(path.join(videoDir, a)).mtime.getTime();
         })[0];
 
         if (latestFile) {
-            const newName = `recording_${Date.now()}.webm`;
-            fs.renameSync(path.join(videoDir, latestFile), path.join(videoDir, newName));
-            console.log(`Video saved to video/${newName}`);
+            const fixedName = `recording.webm`;
+            const fixedPath = path.join(videoDir, fixedName);
+            // Delete existing if any
+            if (fs.existsSync(fixedPath)) fs.unlinkSync(fixedPath);
+
+            fs.renameSync(path.join(videoDir, latestFile), fixedPath);
+            console.log(`Video saved to video/${fixedName}`);
         } else {
             console.error("No video file found in video directory!");
         }
