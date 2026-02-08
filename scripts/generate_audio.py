@@ -1,7 +1,7 @@
 import os
 import json
 import torch
-from melotts.api import TTS
+from melo.api import TTS
 from openvoice.api import ToneColorConverter
 
 def generate_audio():
