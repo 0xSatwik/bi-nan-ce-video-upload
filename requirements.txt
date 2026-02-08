@@ -51,3 +51,4 @@ tiktoken
 # OpenVoice dependencies (pre-install)
 wavmark
 whisper-timestamped
+eng-to-ipa
