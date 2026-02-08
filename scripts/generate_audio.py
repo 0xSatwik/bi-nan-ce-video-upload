@@ -6,11 +6,11 @@ from openvoice.api import ToneColorConverter
 
 def generate_audio():
     device = "cpu"
-    output_dir = "youtube/audio"
+    output_dir = "audio"
     os.makedirs(output_dir, exist_ok=True)
     
     # Load script
-    with open("youtube/scripts/script.json", "r") as f:
+    with open("scripts/script.json", "r") as f:
         scenes = json.load(f)
 
     # Initialize MeloTTS (English)
@@ -23,7 +23,7 @@ def generate_audio():
     converter.load_checkpoint(f'{os.path.dirname(os.path.abspath(__file__))}/../checkpoints/converter/checkpoint.pth')
 
     # Load Reference Speaker
-    reference_speaker = "youtube/reference.mp3"
+    reference_speaker = "reference.mp3"
     target_se, audio_name = converter.extract_se(reference_speaker, output_dir=output_dir)
 
     timing = {}
@@ -66,7 +66,7 @@ def generate_audio():
         print(f"Scene {scene_id} duration: {duration:.2f}s")
     
     # Save timing configuration
-    with open("youtube/scripts/timing.json", "w") as f:
+    with open("scripts/timing.json", "w") as f:
         json.dump(timing, f, indent=2)
 
 if __name__ == "__main__":

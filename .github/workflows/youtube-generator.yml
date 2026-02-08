@@ -21,7 +21,7 @@ jobs:
 
     - name: Install Python Dependencies
       run: |
-        pip install -r youtube/requirements.txt
+        pip install -r requirements.txt
         # Install ffmpeg for moviepy
         sudo apt-get update && sudo apt-get install -y ffmpeg
 
@@ -30,39 +30,37 @@ jobs:
       with:
         node-version: '20'
         cache: 'npm'
-        cache-dependency-path: youtube/package.json
 
     - name: Install Node Dependencies
-      working-directory: youtube
       run: npm ci
 
     - name: Install Playwright Browsers
-      working-directory: youtube
       run: npx playwright install --with-deps chromium
 
     - name: Create Token File
-      # Write the token.json from GitHub Secrets
-      run: echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > youtube/token.json
+      # Write the token.json from GitHub Secrets (only if secret exists)
+      if: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
+      run: echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > token.json
 
     - name: Generate Audio (MeloTTS + OpenVoice)
       # This step might take time on CPU
-      run: python youtube/scripts/generate_audio.py
+      run: python scripts/generate_audio.py
 
     - name: Record Video (Playwright)
-      # Runs in headless mode (default for CI), might need specific config in script to ensure headful-like rendering 
-      # or use xvfb if needed. Playwright handles headless recording well usually.
-      working-directory: youtube
       run: npm run record
 
     - name: Process Video (Merge)
-      run: python youtube/scripts/process_video.py
+      run: python scripts/process_video.py
 
     - name: Upload to YouTube
-      run: python youtube/scripts/upload.py
+      # Only attempt upload if credentials exist; script handles gracefully if missing
+      run: python scripts/upload.py
+      continue-on-error: true
 
     - name: Upload Video Artifact
       if: always()
       uses: actions/upload-artifact@v4
       with:
         name: final-video
-        path: youtube/output/final_video.mp4
+        path: output/final_video.mp4
+        if-no-files-found: warn

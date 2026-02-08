@@ -29,7 +29,7 @@ test('record video', async () => {
 
     const context = await browser.newContext({
         recordVideo: {
-            dir: 'youtube/video',
+            dir: 'video',
             size: { width: 1920, height: 1080 }
         },
         viewport: { width: 1920, height: 1080 },
@@ -105,7 +105,7 @@ test('record video', async () => {
 
     // Rename the video file to something predictable
     // Playwright creates a random name.
-    const videoDir = 'youtube/video';
+    const videoDir = 'video';
     const files = fs.readdirSync(videoDir);
     // Assuming the latest file is the one we just recorded
     // In a clean run, it's the only one.
@@ -116,6 +116,6 @@ test('record video', async () => {
 
     if (latestFile) {
         fs.renameSync(path.join(videoDir, latestFile), path.join(videoDir, 'recording.webm'));
-        console.log('Video saved to youtube/video/recording.webm');
+        console.log('Video saved to video/recording.webm');
     }
 });

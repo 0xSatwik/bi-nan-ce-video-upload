@@ -1,47 +1,88 @@
 import os
 import json
-from googleapiclient.discovery import build
-from googleapiclient.http import MediaFileUpload
-from google.oauth2.credentials import Credentials
-from google.auth.transport.requests import Request
+import shutil
+from datetime import datetime
+
+# Video paths - try both local and workflow paths
+VIDEO_SOURCE_PATH = "output/final_video.mp4"
+VIDEO_BACKUP_DIR = "saved_videos"
+
+def ensure_video_saved():
+    """Always save a backup of the final video with timestamp."""
+    if not os.path.exists(VIDEO_SOURCE_PATH):
+        print(f"Video file not found at {VIDEO_SOURCE_PATH}")
+        return False
+    
+    # Create backup directory if it doesn't exist
+    os.makedirs(VIDEO_BACKUP_DIR, exist_ok=True)
+    
+    # Create timestamped backup
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_path = os.path.join(VIDEO_BACKUP_DIR, f"video_{timestamp}.mp4")
+    
+    shutil.copy2(VIDEO_SOURCE_PATH, backup_path)
+    print(f"Video saved to: {backup_path}")
+    return True
 
 def get_authenticated_service():
-    # Load credentials from environment variables or file
-    # For GitHub Actions, we expect these to be set as secrets and written to a file or passed directly.
-    # Here we assume a file 'token.json' exists with the refresh token, 
-    # created via a local auth flow previously.
-    
-    # We can also construct Credentials object from env vars directly to avoid files.
+    """Get YouTube API service if credentials are available."""
+    try:
+        from googleapiclient.discovery import build
+        from google.oauth2.credentials import Credentials
+        from google.auth.transport.requests import Request
+    except ImportError:
+        print("Google API libraries not installed. Skipping YouTube upload.")
+        return None
     
     creds = None
-    if os.path.exists('youtube/token.json'):
-        creds = Credentials.from_authorized_user_file('youtube/token.json', ['https://www.googleapis.com/auth/youtube.upload'])
+    token_path = 'token.json'
     
-    if not creds or not creds.valid:
-        if creds and creds.expired and creds.refresh_token:
-            creds.refresh(Request())
-        else:
-            raise Exception("No valid credentials found. Please run local auth first to generate token.json.")
+    if not os.path.exists(token_path):
+        print(f"Token file not found at {token_path}. YouTube upload skipped.")
+        print("The video has been generated and saved locally.")
+        return None
+    
+    try:
+        creds = Credentials.from_authorized_user_file(token_path, ['https://www.googleapis.com/auth/youtube.upload'])
+        
+        if not creds or not creds.valid:
+            if creds and creds.expired and creds.refresh_token:
+                creds.refresh(Request())
+            else:
+                print("Credentials expired and no refresh token available. YouTube upload skipped.")
+                return None
+        
+        return build('youtube', 'v3', credentials=creds)
+    except Exception as e:
+        print(f"Error authenticating with YouTube: {e}")
+        print("YouTube upload skipped. Video saved locally.")
+        return None
 
-    return build('youtube', 'v3', credentials=creds)
-
-def upload_video():
-    youtube = get_authenticated_service()
-
+def upload_video(youtube):
+    """Upload video to YouTube."""
+    from googleapiclient.http import MediaFileUpload
+    
     request_body = {
         'snippet': {
             'title': 'How to Use Binance Word of the Day Solver | CryptoWalletsX',
-            'description': 'Master the Binance Word of the Day with the CryptoWalletsX Solver! \n\nIn this video, we enable you to:\n- Use the Binance WOTD Solver tool\n- Select word lengths (3-8 letters)\n- Get accurate answers daily\n\nVisit: https://cryptowalletsx.com/binance-wotd-solver',
+            'description': '''Master the Binance Word of the Day with the CryptoWalletsX Solver! 
+
+In this video, we enable you to:
+- Use the Binance WOTD Solver tool
+- Select word lengths (3-8 letters)
+- Get accurate answers daily
+
+Visit: https://cryptowalletsx.com/binance-wotd-solver''',
             'tags': ['Binance WOTD', 'CryptoWalletsX', 'WOTD Solver', 'Binance Answers', 'Crypto'],
-            'categoryId': '22' # People & Blogs
+            'categoryId': '22'  # People & Blogs
         },
         'status': {
-            'privacyStatus': 'public', # or 'private' for testing
+            'privacyStatus': 'public',
             'selfDeclaredMadeForKids': False
         }
     }
 
-    media_file = MediaFileUpload('youtube/output/final_video.mp4', chunksize=-1, resumable=True)
+    media_file = MediaFileUpload(VIDEO_SOURCE_PATH, chunksize=-1, resumable=True)
 
     request = youtube.videos().insert(
         part='snippet,status',
@@ -56,9 +97,27 @@ def upload_video():
             print(f"Uploaded {int(status.progress() * 100)}%")
 
     print(f"Upload Complete! Video ID: {response.get('id')}")
+    return True
+
+def main():
+    # Always try to save the video first
+    video_exists = ensure_video_saved()
+    
+    if not video_exists:
+        print("No video to upload. Exiting.")
+        return
+    
+    # Try to upload to YouTube
+    youtube = get_authenticated_service()
+    
+    if youtube:
+        try:
+            upload_video(youtube)
+        except Exception as e:
+            print(f"YouTube upload failed: {e}")
+            print("Video has been saved locally and as GitHub artifact.")
+    else:
+        print("YouTube API not configured. Video saved locally and as GitHub artifact.")
 
 if __name__ == "__main__":
-    if os.path.exists("youtube/output/final_video.mp4"):
-        upload_video()
-    else:
-        print("Video file not found at youtube/output/final_video.mp4")
+    main()

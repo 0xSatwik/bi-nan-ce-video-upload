@@ -3,17 +3,17 @@ import json
 import os
 
 def process_video():
-    video_path = "youtube/video/recording.webm"
-    audio_dir = "youtube/audio"
-    output_path = "youtube/output/final_video.mp4"
-    os.makedirs("youtube/output", exist_ok=True)
+    video_path = "video/recording.webm"
+    audio_dir = "audio"
+    output_path = "output/final_video.mp4"
+    os.makedirs("output", exist_ok=True)
 
     if not os.path.exists(video_path):
         print("Video recording not found.")
         return
 
     # Load Script to know order of scenes
-    with open("youtube/scripts/script.json", "r") as f:
+    with open("scripts/script.json", "r") as f:
         scenes = json.load(f)
     
     # Load Timing to know when each audio starts
