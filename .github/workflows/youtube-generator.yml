@@ -25,7 +25,10 @@ jobs:
         sudo apt-get install -y ffmpeg libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libavfilter-dev libswscale-dev libswresample-dev pkg-config
 
     - name: Install Python Dependencies
-      run: pip install -r requirements.txt
+      run: |
+        pip install -r requirements.txt
+        # Install OpenVoice without its dependencies (we pre-installed compatible versions)
+        pip install git+https://github.com/myshell-ai/OpenVoice.git@v2 --no-deps
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
