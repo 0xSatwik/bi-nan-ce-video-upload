@@ -1,0 +1,32 @@
+[
+    {
+        "id": "intro",
+        "text": "Welcome to Crypto Wallets X. Today, we're showing you how to use our Binance Word of the Day Solver. Start by searching for CryptoWalletsX on Google and clicking the first result.",
+        "action": "search_and_nav"
+    },
+    {
+        "id": "nav_solver",
+        "text": "Once you're on the homepage, head to the header menu and click on Binance WOTD Solver.",
+        "action": "nav_to_solver"
+    },
+    {
+        "id": "solver_demo",
+        "text": "This tool is designed to help you win. Select your word length, for example, 3, 4, 5, or 6 letters. You can also tap the tiles to change their colors to match your game feedback and get the next suggestion.",
+        "action": "demo_solver"
+    },
+    {
+        "id": "nav_answers",
+        "text": "Need the answers directly? Scroll down to the footer and click on Binance WOTD Answer Today.",
+        "action": "nav_to_answers"
+    },
+    {
+        "id": "reveal_answers",
+        "text": "Here, you'll find the latest answers updated daily. Simply click on 'Reveal Answer' to see the solutions for each theme.",
+        "action": "reveal_answers"
+    },
+    {
+        "id": "outro",
+        "text": "That's it! Visit CryptoWalletsX.com today to master the Binance Word of the Day.",
+        "action": "outro"
+    }
+]

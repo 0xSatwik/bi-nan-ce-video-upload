@@ -1,0 +1,10 @@
+audio/
+video/
+output/
+token.json
+node_modules/
+__pycache__/
+*.wav
+*.mp3
+*.webm
+*.mp4

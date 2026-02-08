@@ -1,0 +1,16 @@
+# Voice Cloning
+torch
+torchaudio
+git+https://github.com/myshell-ai/MeloTTS.git
+git+https://github.com/myshell-ai/OpenVoice.git
+
+# Video Processing
+moviepy
+
+# YouTube Upload
+google-auth-oauthlib
+google-api-python-client
+
+# Utilities
+tqdm
+librosa
