@@ -57,6 +57,12 @@ jobs:
       env:
         YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
 
+    - name: Download OpenVoice Checkpoints
+      run: |
+        mkdir -p checkpoints/converter
+        wget https://huggingface.co/myshell-ai/OpenVoice/resolve/main/checkpoints_v2/converter/config.json -O checkpoints/converter/config.json
+        wget https://huggingface.co/myshell-ai/OpenVoice/resolve/main/checkpoints_v2/converter/checkpoint.pth -O checkpoints/converter/checkpoint.pth
+
     - name: Generate Audio (MeloTTS + OpenVoice)
       # This step might take time on CPU
       env:
