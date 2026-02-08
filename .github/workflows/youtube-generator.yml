@@ -38,9 +38,14 @@ jobs:
       run: npx playwright install --with-deps chromium
 
     - name: Create Token File
-      # Write the token.json from GitHub Secrets (only if secret exists)
-      if: ${{ secrets.YOUTUBE_TOKEN_JSON != '' }}
-      run: echo '${{ secrets.YOUTUBE_TOKEN_JSON }}' > token.json
+      # Write the token.json from GitHub Secrets (if secret is empty, file won't be valid JSON)
+      # The upload script handles missing/invalid credentials gracefully
+      run: |
+        if [ -n "$YOUTUBE_TOKEN" ]; then
+          echo "$YOUTUBE_TOKEN" > token.json
+        fi
+      env:
+        YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
 
     - name: Generate Audio (MeloTTS + OpenVoice)
       # This step might take time on CPU
