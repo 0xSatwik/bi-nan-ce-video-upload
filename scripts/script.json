@@ -11,7 +11,7 @@
     },
     {
         "id": "solver_demo",
-        "text": "This tool is designed to help you win. Select your word length, for example, 3, 4, 5, or 6 letters. You can also tap the tiles to change their colors to match your game feedback and get the next suggestion.",
+        "text": "This tool helps you win. You can select different word lengths from 3 to 8 letters. Let's try 5 letters. Type any word, then tap tiles to change colors. One tap for green meaning correct position, another tap for yellow meaning wrong position. Click solve to get suggestions, then use those suggestions and change colors again to narrow down the answer.",
         "action": "demo_solver"
     },
     {

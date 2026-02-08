@@ -121,74 +121,99 @@ test('record video', async () => {
 
     await waitForAudio(page, 'intro', 6);
 
-    // Scene 2/3: Solver Interaction
-    console.log("Scene 3: Solver Demo - iterating all lengths");
+    // Scene 2/3: Solver Demo - Simplified & Narrative
+    console.log("Scene 2/3: Solver Demo - Showing word length selection and color tapping");
 
     // Scroll to solver view
     await page.evaluate(() => window.scrollBy(0, 300));
     await page.waitForTimeout(1000);
 
-    const lengths = [3, 4, 5, 6, 7, 8];
-    for (const len of lengths) {
-        console.log(`Demoing length: ${len}`);
-        // Click the length button
-        const lenBtn = page.getByRole('button', { name: `${len} Letters` });
-        if (await lenBtn.isVisible()) {
-            await lenBtn.hover();
-            await page.mouse.down(); await page.mouse.up(); // Explicit click for video
-            await lenBtn.click();
-            await page.waitForTimeout(1000); // wait for UI update
-        } else {
-            console.warn(`Button for ${len} letters not found`);
-            continue;
+    // **Show that you CAN change word lengths** - hover over a few to demonstrate
+    console.log("Demonstrating word length buttons...");
+    const demonstrateButtons = [3, 5, 7];
+    for (const len of demonstrateButtons) {
+        const btn = page.getByRole('button', { name: `${len} Letters` });
+        if (await btn.isVisible()) {
+            await btn.hover();
+            await page.waitForTimeout(300);
         }
+    }
 
-        // Type a random guess
-        const randomWords: Record<number, string> = {
-            3: "CRY", 4: "FUND", 5: "TRADE", 6: "WALLET", 7: "UPGRADE", 8: "PROTOCOL"
-        };
-        const wordToType = randomWords[len] || "TEST";
+    // **Pick ONE word length** - 5 letters for the demo
+    console.log("Selecting 5 letters...");
+    const fiveLetterBtn = page.getByRole('button', { name: '5 Letters' });
+    if (await fiveLetterBtn.isVisible()) {
+        await fiveLetterBtn.hover();
+        await page.mouse.down(); await page.mouse.up();
+        await fiveLetterBtn.click();
+        await page.waitForTimeout(1000);
+    }
 
-        // Focus input (assuming there is an input or we just type)
-        // Trying to find the input field. Based on typical solver designs it might be a text input.
-        const input = page.locator('input[type="text"]').first();
-        if (await input.isVisible()) {
-            await input.fill('');
-            await input.pressSequentially(wordToType, { delay: 150 }); // Slow typing for video
-            await page.waitForTimeout(500);
-        }
-
-        // Change colors of tiles (simulating user matching pattern)
-        // We select the first row of tiles if available
-        const tiles = page.locator('.tile-selector, button[aria-label*="Change color"], .grid button');
-        // Note: Selector might need adjustment based on real DOM, using generic fallback
-        const tileCount = await tiles.count();
-        if (tileCount > 0) {
-            // Click a few tiles to change colors
-            for (let i = 0; i < Math.min(tileCount, len); i++) {
-                const tile = tiles.nth(i);
-                if (await tile.isVisible()) {
-                    await tile.hover();
-                    await tile.click(); // Green?
-                    await page.waitForTimeout(300);
-                    await tile.click(); // Yellow?
-                    await page.waitForTimeout(300);
-                }
-            }
-        }
-
-        // Get suggestion/Solve
-        // Look for buttons like "Solve", "Guess", "Enter"
-        const solveBtn = page.getByRole('button', { name: /Solve|Enter|Guess|Add Guess/i }).first();
-        if (await solveBtn.isVisible()) {
-            await solveBtn.hover();
-            await solveBtn.click();
-            await page.waitForTimeout(1500); // Show results
-        }
-
+    // **Type a random word**
+    console.log("Typing a word...");
+    const input = page.locator('input[type="text"]').first();
+    if (await input.isVisible()) {
+        await input.fill('');
+        await input.pressSequentially('TRADE', { delay: 150 });
         await page.waitForTimeout(500);
     }
 
+    // **Demonstrate color changing - tap to yellow, tap to green**
+    console.log("Demonstrating color tapping...");
+    const tiles = page.locator('button[aria-label*="Change color"]').or(page.locator('.tile')).or(page.locator('[class*="tile"]'));
+    const tileCount = await tiles.count();
+
+    if (tileCount > 0) {
+        // Tap first tile - typically cycles through Grey -> Green -> Yellow
+        const firstTile = tiles.first();
+        await firstTile.scrollIntoViewIfNeeded();
+        await firstTile.hover();
+        await page.waitForTimeout(300);
+
+        // First tap (to green)
+        await firstTile.click();
+        await page.waitForTimeout(800);
+
+        // Second tap (to yellow)
+        await firstTile.click();
+        await page.waitForTimeout(800);
+
+        // Third tap (back to grey or next state)
+        await firstTile.click();
+        await page.waitForTimeout(500);
+    }
+
+    // **Click solve to get suggestions**
+    console.log("Getting suggestions...");
+    const solveBtn = page.getByRole('button', { name: /Solve|Add Guess|Get Suggestions/i }).first();
+    if (await solveBtn.isVisible()) {
+        await solveBtn.hover();
+        await solveBtn.click();
+        await page.waitForTimeout(1500);
+    }
+
+    // **Click on a suggestion if available**
+    console.log("Looking for suggestions...");
+    const suggestionBtn = page.locator('button').filter({ hasText: /^[A-Z]{5}$/ }).first();
+    if (await suggestionBtn.count() > 0 && await suggestionBtn.isVisible()) {
+        await suggestionBtn.scrollIntoViewIfNeeded();
+        await suggestionBtn.hover();
+        await suggestionBtn.click();
+        await page.waitForTimeout(1000);
+
+        // **Demonstrate color change on the suggestion**
+        const tilesAfter = page.locator('button[aria-label*="Change color"]').or(page.locator('.tile'));
+        if (await tilesAfter.count() > 1) {
+            const secondTile = tilesAfter.nth(1);
+            await secondTile.hover();
+            await secondTile.click(); // First tap
+            await page.waitForTimeout(500);
+            await secondTile.click(); // Second tap
+            await page.waitForTimeout(500);
+        }
+    }
+
+    // **CRITICAL: Wait for audio AFTER all solver interactions**
     await waitForAudio(page, 'solver_demo', 8);
 
 
@@ -224,33 +249,71 @@ test('record video', async () => {
     await page.waitForLoadState('domcontentloaded');
     await waitForAudio(page, 'nav_answers', 5);
 
-    // Scene 5: Reveal Answers
-    console.log("Scene 5: Reveal Answers");
+    // Scene 5: Reveal Answers - Click ALL buttons for 3-8 letters
+    console.log("Scene 5: Reveal Answers - Finding all reveal buttons");
 
-    // Wait for content (skeleton loader to go away)
+    // Wait for page content to fully load (skeleton loaders to clear)
     try {
-        await page.waitForSelector('button:has-text("Reveal")', { timeout: 10000 });
+        await page.waitForSelector('button', { timeout: 10000, state: 'attached' });
+        await page.waitForTimeout(2000); // Extra wait for React hydration
     } catch (e) {
-        console.warn("Reveal buttons did not appear in time");
+        console.warn("Buttons didn't load properly");
     }
 
-    const revealButtons = page.locator('button:has-text("Reveal")');
+    // **Use multiple strategies to find ALL reveal buttons**
+    // Strategy 1: Text-based locator (most reliable for Next.js)
+    const revealButtons = page.locator('button').filter({ hasText: 'Reveal' });
     const count = await revealButtons.count();
 
+    console.log(`Found ${count} reveal buttons using text locator`);
+
     if (count > 0) {
-        // Prepare to scroll gently
-        for (let i = 0; i < count; ++i) {
+        // Click each button individually with explicit waiting
+        for (let i = 0; i < count; i++) {
             const btn = revealButtons.nth(i);
-            if (await btn.isVisible()) {
-                await btn.scrollIntoViewIfNeeded();
+            try {
+                // Ensure button is attached and visible
+                await btn.scrollIntoViewIfNeeded({ timeout: 5000 });
                 await page.waitForTimeout(500);
-                await btn.hover();
-                await btn.click();
-                await page.waitForTimeout(1000); // Read time
+
+                const isVisible = await btn.isVisible();
+                console.log(`Button ${i} visible: ${isVisible}`);
+
+                if (isVisible) {
+                    await btn.hover();
+                    await btn.click({ timeout: 5000 });
+                    console.log(`Clicked reveal button ${i + 1}/${count}`);
+                    await page.waitForTimeout(1000); // Give time to reveal
+                }
+            } catch (e) {
+                const error = e as Error;
+                console.warn(`Failed to click button ${i}: ${error.message}`);
+                // Try alternative click method
+                try {
+                    await btn.click({ force: true });
+                    console.log(`Force-clicked button ${i}`);
+                } catch (e2) {
+                    console.error(`Could not click button ${i} even with force`);
+
+                }
             }
         }
     } else {
-        console.warn("No reveal buttons found");
+        console.warn("No reveal buttons found - trying alternative selectors");
+        // Fallback: try role-based selector
+        const fallbackButtons = page.getByRole('button', { name: /Reveal/i });
+        const fallbackCount = await fallbackButtons.count();
+        console.log(`Fallback found ${fallbackCount} buttons`);
+
+        for (let i = 0; i < fallbackCount; i++) {
+            const btn = fallbackButtons.nth(i);
+            if (await btn.isVisible()) {
+                await btn.scrollIntoViewIfNeeded();
+                await btn.hover();
+                await btn.click();
+                await page.waitForTimeout(1000);
+            }
+        }
     }
 
     await waitForAudio(page, 'reveal_answers', 6);
