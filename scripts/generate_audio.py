@@ -2,6 +2,13 @@ import os
 import json
 import torch
 from melo.api import TTS
+import nltk
+
+# Download required NLTK data
+try:
+    nltk.data.find('taggers/averaged_perceptron_tagger_eng')
+except LookupError:
+    nltk.download('averaged_perceptron_tagger_eng')
 
 def generate_audio():
     device = "cpu"
