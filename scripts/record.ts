@@ -22,7 +22,7 @@ async function waitForAudio(page: any, sceneId: string, defaultDuration: number 
 
 test('record video', async () => {
     const browser = await chromium.launch({
-        headless: true, // Set to true for CI environment
+        headless: false, // Must be false to capture headful events if needed, but for recording we might need a specific setup or just use traces
         // In a real CI environment with xvfb, this works. For strictly recording to file via Playwright,
         // we usually use the `recordVideo` context option.
     });

@@ -22,23 +22,7 @@ jobs:
     - name: Install System Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y ffmpeg libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libavfilter-dev libswscale-dev libswresample-dev pkg-config mecab libmecab-dev mecab-ipadic-utf8 wget
-        # Create symlink for MeCab config (Python package looks at /usr/local/etc/)
-        sudo mkdir -p /usr/local/etc
-        sudo ln -sf /etc/mecabrc /usr/local/etc/mecabrc
-        # Reinstall mecab-python3 to pick up the system MeCab
-        pip uninstall -y mecab-python3 || true
-        pip install mecab-python3
-
-    - name: Download OpenVoice V2 Checkpoints
-      run: |
-        mkdir -p checkpoints
-        wget https://huggingface.co/myshell-ai/OpenVoiceV2/resolve/main/checkpoints_v2_240206.zip
-        unzip checkpoints_v2_240206.zip -d .
-        # The zip usually contains a 'checkpoints' folder. If it extracts directly or into a different subfolder, 
-        # we might need to move it. OpenVoice V2 expects 'checkpoints/converter' etc.
-        # Check current layout after extraction if needed, but standard is to have the 'checkpoints' folder inside.
-        rm checkpoints_v2_240206.zip
+        sudo apt-get install -y ffmpeg libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev libavfilter-dev libswscale-dev libswresample-dev pkg-config mecab libmecab-dev mecab-ipadic-utf8
 
     - name: Install Python Dependencies
       run: |
@@ -75,6 +59,8 @@ jobs:
 
     - name: Generate Audio (MeloTTS + OpenVoice)
       # This step might take time on CPU
+      env:
+        MECABRC: /etc/mecabrc
       run: python scripts/generate_audio.py
 
     - name: Record Video (Playwright)
