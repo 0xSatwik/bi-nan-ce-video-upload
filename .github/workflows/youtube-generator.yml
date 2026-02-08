@@ -32,8 +32,7 @@ jobs:
         # Stage 2: Install MeloTTS without deps (we pre-installed compatible versions)
         pip install git+https://github.com/myshell-ai/MeloTTS.git --no-deps
         
-        # Stage 3: Install OpenVoice without deps (avoid broken av==10.*/faster-whisper==0.9.0)
-        pip install git+https://github.com/myshell-ai/OpenVoice.git --no-deps
+
 
     - name: Set up Node.js
       uses: actions/setup-node@v4
@@ -57,13 +56,9 @@ jobs:
       env:
         YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
 
-    - name: Download OpenVoice Checkpoints
-      run: |
-        mkdir -p checkpoints/converter
-        wget https://huggingface.co/myshell-ai/OpenVoice/resolve/main/checkpoints_v2/converter/config.json -O checkpoints/converter/config.json
-        wget https://huggingface.co/myshell-ai/OpenVoice/resolve/main/checkpoints_v2/converter/checkpoint.pth -O checkpoints/converter/checkpoint.pth
 
-    - name: Generate Audio (MeloTTS + OpenVoice)
+
+    - name: Generate Audio (MeloTTS)
       # This step might take time on CPU
       env:
         MECABRC: /etc/mecabrc

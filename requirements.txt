@@ -2,9 +2,8 @@
 torch
 torchaudio
 
-# Pre-built wheels to avoid Cython issues
+# Pre-built wheels to avoid Cython issues (av required by moviepy/others)
 av>=12.0.0
-faster-whisper>=1.0.0
 
 # Video Processing
 moviepy
@@ -47,8 +46,3 @@ unidic-lite
 ipadic
 sentencepiece
 tiktoken
-
-# OpenVoice dependencies (pre-install)
-wavmark
-whisper-timestamped
-eng-to-ipa
