@@ -42,6 +42,12 @@ cached_path
 txtsplit
 tensorboard
 
+# Required for Japanese (English TTS imports these even if unused)
+unidic-lite
+ipadic
+sentencepiece
+tiktoken
+
 # OpenVoice dependencies (pre-install)
 wavmark
 whisper-timestamped
