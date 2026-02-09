@@ -268,34 +268,38 @@ test('record video', async () => {
     console.log(`Found ${count} reveal buttons using text locator`);
 
     if (count > 0) {
-        // Click each button individually with explicit waiting
+        // Click each button individually with graceful error handling
         for (let i = 0; i < count; i++) {
             const btn = revealButtons.nth(i);
             try {
-                // Ensure button is attached and visible
-                await btn.scrollIntoViewIfNeeded({ timeout: 5000 });
+                // Check if button is still attached to DOM
+                const isAttached = await btn.isVisible().catch(() => false);
+                if (!isAttached) {
+                    console.warn(`Button ${i} not attached to DOM, skipping`);
+                    continue;
+                }
+
+                console.log(`Attempting to click button ${i + 1}/${count}`);
+
+                // Try scrolling with reduced timeout
+                await btn.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {
+                    console.warn(`Could not scroll to button ${i}, but continuing`);
+                });
+
                 await page.waitForTimeout(500);
 
-                const isVisible = await btn.isVisible();
-                console.log(`Button ${i} visible: ${isVisible}`);
+                // Attempt click with timeout
+                await btn.hover({ timeout: 2000 }).catch(() => { });
+                await btn.click({ timeout: 3000 });
+                console.log(`✓ Clicked reveal button ${i + 1}/${count}`);
+                await page.waitForTimeout(1000); // Give time to reveal
 
-                if (isVisible) {
-                    await btn.hover();
-                    await btn.click({ timeout: 5000 });
-                    console.log(`Clicked reveal button ${i + 1}/${count}`);
-                    await page.waitForTimeout(1000); // Give time to reveal
-                }
             } catch (e) {
                 const error = e as Error;
-                console.warn(`Failed to click button ${i}: ${error.message}`);
-                // Try alternative click method
-                try {
-                    await btn.click({ force: true });
-                    console.log(`Force-clicked button ${i}`);
-                } catch (e2) {
-                    console.error(`Could not click button ${i} even with force`);
-
-                }
+                console.warn(`✗ Skipping button ${i}: ${error.message}`);
+                // Do NOT force-click as it may cause page closure
+                // Just continue to next button
+                continue;
             }
         }
     } else {
@@ -307,11 +311,17 @@ test('record video', async () => {
 
         for (let i = 0; i < fallbackCount; i++) {
             const btn = fallbackButtons.nth(i);
-            if (await btn.isVisible()) {
-                await btn.scrollIntoViewIfNeeded();
-                await btn.hover();
-                await btn.click();
-                await page.waitForTimeout(1000);
+            try {
+                if (await btn.isVisible()) {
+                    await btn.scrollIntoViewIfNeeded({ timeout: 3000 });
+                    await btn.hover();
+                    await btn.click();
+                    await page.waitForTimeout(1000);
+                    console.log(`✓ Fallback clicked button ${i + 1}`);
+                }
+            } catch (e) {
+                console.warn(`✗ Fallback button ${i} failed, skipping`);
+                continue;
             }
         }
     }
