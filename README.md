@@ -11,11 +11,39 @@ This is a standalone project to automate the creation and upload of YouTube vide
 
 ## Setup & Usage
 
-### 1. YouTube Data API
-1. Create a project in [Google Cloud Console](https://console.cloud.google.com/).
-2. Enable **YouTube Data API v3**.
-3. Generate OAuth credentials (Desktop) and run `upload.py` once locally to generate a `token.json`.
-4. Add the content of `token.json` as a GitHub Secret named `YOUTUBE_TOKEN_JSON`.
+### 1. YouTube Upload Automation Setup
+To enable automatic YouTube uploads, you need to provide a valid OAuth2 token to GitHub Secrets.
+
+#### Step 1: Google Cloud Console
+1.  Go to [Google Cloud Console](https://console.cloud.google.com/).
+2.  Create a new project or select an existing one.
+3.  Enable **YouTube Data API v3**.
+4.  Go to **Credentials** -> **Create Credentials** -> **OAuth client ID**.
+5.  Select **Desktop App**.
+6.  Download the JSON file and save it as `client_secret.json` in the `binance-word-of-the-day` folder.
+
+#### Step 2: Generate Token Locally
+1.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+2.  Run the upload script locally to authenticate:
+    ```bash
+    python scripts/upload_youtube.py
+    ```
+3.  A browser window will open. Log in with your YouTube/Google account and allow access.
+4.  The script will verify authentication and generate a `token.json` file.
+    - **Note:** If you see a "Google hasn't verified this app" warning, click "Advanced" -> "Go to [Project Name] (unsafe)" because this is your own personal app.
+
+#### Step 3: Configure GitHub Secrets
+1.  Open the `token.json` file and copy its entire content.
+2.  Go to your GitHub Repository -> **Settings** -> **Secrets and variables** -> **Actions**.
+3.  Click **New repository secret**.
+4.  Name: `YOUTUBE_TOKEN_JSON`
+5.  Value: Paste the content of `token.json`.
+6.  Click **Add secret**.
+
+Now the workflow will automatically upload videos to your channel!
 
 ### 2. GitHub Actions
 This project is designed to run in `.github/workflows/youtube-generator.yml`. When you push this folder to its own repository, GitHub will detect the workflow.

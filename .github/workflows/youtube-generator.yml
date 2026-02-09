@@ -71,8 +71,9 @@ jobs:
       run: python scripts/process_video.py
 
     - name: Upload to YouTube
-      # Only attempt upload if credentials exist; script handles gracefully if missing
-      run: python scripts/upload.py
+      run: python scripts/upload_youtube.py
+      env:
+        YOUTUBE_TOKEN: ${{ secrets.YOUTUBE_TOKEN_JSON }}
       continue-on-error: true
 
     - name: Upload Video Artifact
