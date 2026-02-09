@@ -40,7 +40,7 @@ def generate_audio():
         # Generate Audio with MeloTTS directly
         # Using 'EN-BR' (British) as it is typically a male voice in this model
         # This writes directly to the final file
-        model.tts_to_file(text, speaker_ids['EN-BR'], final_wav_path, speed=1.1)
+        model.tts_to_file(text, speaker_ids['EN-BR'], final_wav_path, speed=0.9)
 
         # Get Duration for Timing
         import librosa
