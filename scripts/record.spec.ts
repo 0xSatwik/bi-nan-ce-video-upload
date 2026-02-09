@@ -179,217 +179,215 @@ test('record video', async () => {
     const wordLength = 5;
     if (tileCount >= wordLength || tileCount > 0) {
 
-        if (tileCount >= wordLength || tileCount > 0) {
+        // Click first letter tile to cycle colors
+        // Cycle: absent (grey bg-slate-500) → present (yellow bg-amber-400) → correct (green bg-emerald-500)
 
-            // Click first letter tile to cycle colors
-            // Cycle: absent (grey bg-slate-500) → present (yellow bg-amber-400) → correct (green bg-emerald-500)
+        // Target: Set first tile to Green, second to Yellow, others Gray.
+        const firstTile = tileLike.first();
+        const secondTile = tileLike.nth(1);
 
-            // Target: Set first tile to Green, second to Yellow, others Gray.
-            const firstTile = tileLike.first();
-            const secondTile = tileLike.nth(1);
+        await firstTile.scrollIntoViewIfNeeded();
+        await firstTile.hover();
 
-            await firstTile.scrollIntoViewIfNeeded();
-            await firstTile.hover();
+        // 1. Set First Tile to GREEN (Correct)
+        // Click 1: Grey -> Yellow
+        await firstTile.click();
+        await page.waitForTimeout(500);
+        // Click 2: Yellow -> Green
+        await firstTile.click();
+        await page.waitForTimeout(500);
 
-            // 1. Set First Tile to GREEN (Correct)
+        // 2. Set Second Tile to YELLOW (Present)
+        if (tileCount > 1) {
+            await secondTile.hover();
             // Click 1: Grey -> Yellow
-            await firstTile.click();
+            await secondTile.click();
             await page.waitForTimeout(500);
-            // Click 2: Yellow -> Green
-            await firstTile.click();
-            await page.waitForTimeout(500);
-
-            // 2. Set Second Tile to YELLOW (Present)
-            if (tileCount > 1) {
-                await secondTile.hover();
-                // Click 1: Grey -> Yellow
-                await secondTile.click();
-                await page.waitForTimeout(500);
-            }
-
-            console.log("Colors set: Green, Yellow, Grey...");
-
-        } else {
-            console.warn("No tile buttons found for color demo");
         }
 
-        // **Click "Add Guess" button** (NOT "Solve")
-        // User explicitly requested: "click on add guessing not with all gray"
-        console.log("Clicking Add Guess button with colored tiles...");
-        const addGuessBtn = page.getByRole('button', { name: /Add Guess/i });
-        if (await addGuessBtn.isVisible()) {
-            await addGuessBtn.hover();
-            await addGuessBtn.click();
-            await page.waitForTimeout(1500);
-        }
+        console.log("Colors set: Green, Yellow, Grey...");
 
-        // **Click on a suggestion if available**
-        console.log("Looking for suggestions...");
-        // Suggestions are in a scrollable div, they have font-mono class
-        const suggestionBtn = page.locator('div.cursor-pointer').filter({ hasText: /^[A-Z]{5}$/ }).first();
-        if (await suggestionBtn.count() > 0 && await suggestionBtn.isVisible()) {
-            await suggestionBtn.scrollIntoViewIfNeeded();
-            await suggestionBtn.hover();
-            await suggestionBtn.click();
-            await page.waitForTimeout(1000);
+    } else {
+        console.warn("No tile buttons found for color demo");
+    }
 
-            // **Demonstrate color change on the suggestion - tiles will re-appear**
+    // **Click "Add Guess" button** (NOT "Solve")
+    // User explicitly requested: "click on add guessing not with all gray"
+    console.log("Clicking Add Guess button with colored tiles...");
+    const addGuessBtn = page.getByRole('button', { name: /Add Guess/i });
+    if (await addGuessBtn.isVisible()) {
+        await addGuessBtn.hover();
+        await addGuessBtn.click();
+        await page.waitForTimeout(1500);
+    }
+
+    // **Click on a suggestion if available**
+    console.log("Looking for suggestions...");
+    // Suggestions are in a scrollable div, they have font-mono class
+    const suggestionBtn = page.locator('div.cursor-pointer').filter({ hasText: /^[A-Z]{5}$/ }).first();
+    if (await suggestionBtn.count() > 0 && await suggestionBtn.isVisible()) {
+        await suggestionBtn.scrollIntoViewIfNeeded();
+        await suggestionBtn.hover();
+        await suggestionBtn.click();
+        await page.waitForTimeout(1000);
+
+        // **Demonstrate color change on the suggestion - tiles will re-appear**
+        await page.waitForTimeout(500);
+        const tilesAfter = tileLike;
+        if (await tilesAfter.count() > 1) {
+            const secondTile = tilesAfter.nth(1);
+            await secondTile.hover();
+            await secondTile.click(); // grey → yellow
             await page.waitForTimeout(500);
-            const tilesAfter = tileLike;
-            if (await tilesAfter.count() > 1) {
-                const secondTile = tilesAfter.nth(1);
-                await secondTile.hover();
-                await secondTile.click(); // grey → yellow
-                await page.waitForTimeout(500);
-                await secondTile.click(); // yellow → green
-                await page.waitForTimeout(500);
-            }
-        }
-
-        // **CRITICAL: Wait for audio AFTER all solver interactions**
-        await waitForAudio(page, 'solver_demo', 8);
-
-
-        // Scene 4: Answer Today
-        console.log("Scene 4: Answer Today");
-
-        // Fix: Use correct link text/href
-        // Trying generic text match or exact href
-        const answerLink = page.getByRole('link', { name: /Binance wotd answer/i }).first();
-        const answerHref = '/binance-wotd-answer-today';
-        const linkByHref = page.locator(`a[href="${answerHref}"]`);
-
-        let answerPageReached = false;
-
-        if (await answerLink.count() > 0 && await answerLink.isVisible()) {
-            await answerLink.scrollIntoViewIfNeeded();
+            await secondTile.click(); // yellow → green
             await page.waitForTimeout(500);
-            await answerLink.hover();
-            await page.waitForTimeout(500);
-            await answerLink.click();
-            answerPageReached = true;
-        } else if (await linkByHref.count() > 0 && await linkByHref.isVisible()) {
-            console.log("Using href selector for Answer Link");
-            await linkByHref.scrollIntoViewIfNeeded();
-            await linkByHref.click();
-            answerPageReached = true;
-        } else {
-            console.warn("Answer Today link not found, forcing navigation");
-            await page.goto('https://cryptowalletsx.com/binance-wotd-answer-today', { waitUntil: 'domcontentloaded' });
-            answerPageReached = true;
         }
+    }
 
-        await page.waitForLoadState('domcontentloaded');
-        await waitForAudio(page, 'nav_answers', 5);
+    // **CRITICAL: Wait for audio AFTER all solver interactions**
+    await waitForAudio(page, 'solver_demo', 8);
 
-        // Scene 5: Reveal Answers - Click ALL buttons for 3-8 letters
-        console.log("Scene 5: Reveal Answers - Finding all reveal buttons");
 
-        // Wait for page content to fully load (skeleton loaders to clear)
-        try {
-            await page.waitForSelector('button', { timeout: 10000, state: 'attached' });
-            await page.waitForTimeout(2000); // Extra wait for React hydration
-        } catch (e) {
-            console.warn("Buttons didn't load properly");
-        }
+    // Scene 4: Answer Today
+    console.log("Scene 4: Answer Today");
 
-        // **Use multiple strategies to find ALL reveal buttons**
-        // Strategy 1: Exact text match "Reveal Answers" (from AnswerDisplay.tsx line 107)
-        const revealButtons = page.locator('button').filter({ hasText: 'Reveal Answers' });
-        const count = await revealButtons.count();
+    // Fix: Use correct link text/href
+    // Trying generic text match or exact href
+    const answerLink = page.getByRole('link', { name: /Binance wotd answer/i }).first();
+    const answerHref = '/binance-wotd-answer-today';
+    const linkByHref = page.locator(`a[href="${answerHref}"]`);
 
-        console.log(`Found ${count} reveal buttons using text locator`);
+    let answerPageReached = false;
 
-        if (count > 0) {
-            // Click each button individually with graceful error handling
-            for (let i = 0; i < count; i++) {
-                const btn = revealButtons.nth(i);
-                try {
-                    // Check if button is still attached to DOM
-                    const isAttached = await btn.isVisible().catch(() => false);
-                    if (!isAttached) {
-                        console.warn(`Button ${i} not attached to DOM, skipping`);
-                        continue;
-                    }
+    if (await answerLink.count() > 0 && await answerLink.isVisible()) {
+        await answerLink.scrollIntoViewIfNeeded();
+        await page.waitForTimeout(500);
+        await answerLink.hover();
+        await page.waitForTimeout(500);
+        await answerLink.click();
+        answerPageReached = true;
+    } else if (await linkByHref.count() > 0 && await linkByHref.isVisible()) {
+        console.log("Using href selector for Answer Link");
+        await linkByHref.scrollIntoViewIfNeeded();
+        await linkByHref.click();
+        answerPageReached = true;
+    } else {
+        console.warn("Answer Today link not found, forcing navigation");
+        await page.goto('https://cryptowalletsx.com/binance-wotd-answer-today', { waitUntil: 'domcontentloaded' });
+        answerPageReached = true;
+    }
 
-                    console.log(`Attempting to click button ${i + 1}/${count}`);
+    await page.waitForLoadState('domcontentloaded');
+    await waitForAudio(page, 'nav_answers', 5);
 
-                    // Try scrolling with reduced timeout
-                    await btn.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {
-                        console.warn(`Could not scroll to button ${i}, but continuing`);
-                    });
+    // Scene 5: Reveal Answers - Click ALL buttons for 3-8 letters
+    console.log("Scene 5: Reveal Answers - Finding all reveal buttons");
 
-                    await page.waitForTimeout(500);
+    // Wait for page content to fully load (skeleton loaders to clear)
+    try {
+        await page.waitForSelector('button', { timeout: 10000, state: 'attached' });
+        await page.waitForTimeout(2000); // Extra wait for React hydration
+    } catch (e) {
+        console.warn("Buttons didn't load properly");
+    }
 
-                    // Attempt click with timeout
-                    await btn.hover({ timeout: 2000 }).catch(() => { });
-                    await btn.click({ timeout: 3000 });
-                    console.log(`✓ Clicked reveal button ${i + 1}/${count}`);
-                    await page.waitForTimeout(1000); // Give time to reveal
+    // **Use multiple strategies to find ALL reveal buttons**
+    // Strategy 1: Exact text match "Reveal Answers" (from AnswerDisplay.tsx line 107)
+    const revealButtons = page.locator('button').filter({ hasText: 'Reveal Answers' });
+    const count = await revealButtons.count();
 
-                } catch (e) {
-                    const error = e as Error;
-                    console.warn(`✗ Skipping button ${i}: ${error.message}`);
-                    // Do NOT force-click as it may cause page closure
-                    // Just continue to next button
+    console.log(`Found ${count} reveal buttons using text locator`);
+
+    if (count > 0) {
+        // Click each button individually with graceful error handling
+        for (let i = 0; i < count; i++) {
+            const btn = revealButtons.nth(i);
+            try {
+                // Check if button is still attached to DOM
+                const isAttached = await btn.isVisible().catch(() => false);
+                if (!isAttached) {
+                    console.warn(`Button ${i} not attached to DOM, skipping`);
                     continue;
                 }
-            }
-        } else {
-            console.warn("No reveal buttons found - trying alternative selectors");
-            // Fallback: try partial text match
-            const fallbackButtons = page.getByRole('button', { name: /Reveal/i });
-            const fallbackCount = await fallbackButtons.count();
-            console.log(`Fallback found ${fallbackCount} buttons`);
 
-            for (let i = 0; i < fallbackCount; i++) {
-                const btn = fallbackButtons.nth(i);
-                try {
-                    if (await btn.isVisible()) {
-                        await btn.scrollIntoViewIfNeeded({ timeout: 3000 });
-                        await btn.hover();
-                        await btn.click();
-                        await page.waitForTimeout(1000);
-                        console.log(`✓ Fallback clicked button ${i + 1}`);
-                    }
-                } catch (e) {
-                    console.warn(`✗ Fallback button ${i} failed, skipping`);
-                    continue;
+                console.log(`Attempting to click button ${i + 1}/${count}`);
+
+                // Try scrolling with reduced timeout
+                await btn.scrollIntoViewIfNeeded({ timeout: 3000 }).catch(() => {
+                    console.warn(`Could not scroll to button ${i}, but continuing`);
+                });
+
+                await page.waitForTimeout(500);
+
+                // Attempt click with timeout
+                await btn.hover({ timeout: 2000 }).catch(() => { });
+                await btn.click({ timeout: 3000 });
+                console.log(`✓ Clicked reveal button ${i + 1}/${count}`);
+                await page.waitForTimeout(1000); // Give time to reveal
+
+            } catch (e) {
+                const error = e as Error;
+                console.warn(`✗ Skipping button ${i}: ${error.message}`);
+                // Do NOT force-click as it may cause page closure
+                // Just continue to next button
+                continue;
+            }
+        }
+    } else {
+        console.warn("No reveal buttons found - trying alternative selectors");
+        // Fallback: try partial text match
+        const fallbackButtons = page.getByRole('button', { name: /Reveal/i });
+        const fallbackCount = await fallbackButtons.count();
+        console.log(`Fallback found ${fallbackCount} buttons`);
+
+        for (let i = 0; i < fallbackCount; i++) {
+            const btn = fallbackButtons.nth(i);
+            try {
+                if (await btn.isVisible()) {
+                    await btn.scrollIntoViewIfNeeded({ timeout: 3000 });
+                    await btn.hover();
+                    await btn.click();
+                    await page.waitForTimeout(1000);
+                    console.log(`✓ Fallback clicked button ${i + 1}`);
                 }
+            } catch (e) {
+                console.warn(`✗ Fallback button ${i} failed, skipping`);
+                continue;
             }
         }
+    }
 
-        await waitForAudio(page, 'reveal_answers', 6);
+    await waitForAudio(page, 'reveal_answers', 6);
 
-        // Outro
-        console.log("Scene 6: Outro");
-        await waitForAudio(page, 'outro', 3);
+    // Outro
+    console.log("Scene 6: Outro");
+    await waitForAudio(page, 'outro', 3);
 
-        await context.close();
-        await browser.close();
+    await context.close();
+    await browser.close();
 
-        // Rename the video file to a fixed name for processing
-        const videoDir = 'video';
-        if (fs.existsSync(videoDir)) {
-            const files = fs.readdirSync(videoDir);
-            // Get latest file (excluding the fixed name if it exists)
-            const latestFile = files.filter(f => f.endsWith('.webm') && f !== 'recording.webm').sort((a, b) => {
-                return fs.statSync(path.join(videoDir, b)).mtime.getTime() -
-                    fs.statSync(path.join(videoDir, a)).mtime.getTime();
-            })[0];
+    // Rename the video file to a fixed name for processing
+    const videoDir = 'video';
+    if (fs.existsSync(videoDir)) {
+        const files = fs.readdirSync(videoDir);
+        // Get latest file (excluding the fixed name if it exists)
+        const latestFile = files.filter(f => f.endsWith('.webm') && f !== 'recording.webm').sort((a, b) => {
+            return fs.statSync(path.join(videoDir, b)).mtime.getTime() -
+                fs.statSync(path.join(videoDir, a)).mtime.getTime();
+        })[0];
 
-            if (latestFile) {
-                const fixedName = `recording.webm`;
-                const fixedPath = path.join(videoDir, fixedName);
-                // Delete existing if any
-                if (fs.existsSync(fixedPath)) fs.unlinkSync(fixedPath);
+        if (latestFile) {
+            const fixedName = `recording.webm`;
+            const fixedPath = path.join(videoDir, fixedName);
+            // Delete existing if any
+            if (fs.existsSync(fixedPath)) fs.unlinkSync(fixedPath);
 
-                fs.renameSync(path.join(videoDir, latestFile), fixedPath);
-                console.log(`Video saved to video/${fixedName}`);
-            } else {
-                console.error("No video file found in video directory!");
-            }
+            fs.renameSync(path.join(videoDir, latestFile), fixedPath);
+            console.log(`Video saved to video/${fixedName}`);
         } else {
-            console.error("Video directory not created!");
+            console.error("No video file found in video directory!");
         }
-    });
+    } else {
+        console.error("Video directory not created!");
+    }
+});
