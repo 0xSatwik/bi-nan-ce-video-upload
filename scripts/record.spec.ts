@@ -121,7 +121,7 @@ test('record video', async () => {
 
     await waitForAudio(page, 'intro', 6);
 
-    // Scene 2/3: Solver Demo - Simplified & Narrative
+    // Scene 2/3: Solver Demo - Simplified & Narrative 
     console.log("Scene 2/3: Solver Demo - Showing word length selection and color tapping");
 
     // Scroll to solver view
@@ -158,57 +158,75 @@ test('record video', async () => {
         await page.waitForTimeout(500);
     }
 
-    // **Demonstrate color changing - tap to yellow, tap to green**
+    // **Demonstrate color changing - colors cycle: Grey → Yellow → Green**
+    // Tiles are just buttons that show the letters
     console.log("Demonstrating color tapping...");
-    const tiles = page.locator('button[aria-label*="Change color"]').or(page.locator('.tile')).or(page.locator('[class*="tile"]'));
-    const tileCount = await tiles.count();
+
+    // Wait for tiles to appear (they render based on input)
+    await page.waitForTimeout(500);
+
+    // Find tiles - they're buttons that contain letters and have specific color classes
+    // Looking for buttons with bg-slate-500 (grey), bg-amber-400 (yellow), bg-emerald-500 (green)
+    const tileLike = page.locator('button').filter({ has: page.locator(':text-matches("[TRADE]", "i")') }).or(
+        page.locator('button').filter({ hasText: /^[A-Z]$/ })
+    ).or(
+        page.locator('div.flex.justify-center.gap-2 button') // the tiles container
+    );
+
+    const tileCount = await tileLike.count();
+    console.log(`Found ${tileCount} potential tile buttons`);
 
     if (tileCount > 0) {
-        // Tap first tile - typically cycles through Grey -> Green -> Yellow
-        const firstTile = tiles.first();
+        // Click first letter tile to cycle colors
+        // Cycle: absent (grey bg-slate-500) → present (yellow bg-amber-400) → correct (green bg-emerald-500)
+        const firstTile = tileLike.first();
         await firstTile.scrollIntoViewIfNeeded();
         await firstTile.hover();
         await page.waitForTimeout(300);
 
-        // First tap (to green)
+        // First tap - grey to yellow (present)
         await firstTile.click();
         await page.waitForTimeout(800);
 
-        // Second tap (to yellow)
+        // Second tap - yellow to green (correct)
         await firstTile.click();
         await page.waitForTimeout(800);
 
-        // Third tap (back to grey or next state)
+        // Third tap - green back to grey (absent)
         await firstTile.click();
         await page.waitForTimeout(500);
+    } else {
+        console.warn("No tile buttons found for color demo");
     }
 
-    // **Click solve to get suggestions**
-    console.log("Getting suggestions...");
-    const solveBtn = page.getByRole('button', { name: /Solve|Add Guess|Get Suggestions/i }).first();
-    if (await solveBtn.isVisible()) {
-        await solveBtn.hover();
-        await solveBtn.click();
+    // **Click "Add Guess" button** (NOT "Solve")
+    console.log("Clicking Add Guess button...");
+    const addGuessBtn = page.getByRole('button', { name: /Add Guess/i });
+    if (await addGuessBtn.isVisible()) {
+        await addGuessBtn.hover();
+        await addGuessBtn.click();
         await page.waitForTimeout(1500);
     }
 
     // **Click on a suggestion if available**
     console.log("Looking for suggestions...");
-    const suggestionBtn = page.locator('button').filter({ hasText: /^[A-Z]{5}$/ }).first();
+    // Suggestions are in a scrollable div, they have font-mono class
+    const suggestionBtn = page.locator('div.cursor-pointer').filter({ hasText: /^[A-Z]{5}$/ }).first();
     if (await suggestionBtn.count() > 0 && await suggestionBtn.isVisible()) {
         await suggestionBtn.scrollIntoViewIfNeeded();
         await suggestionBtn.hover();
         await suggestionBtn.click();
         await page.waitForTimeout(1000);
 
-        // **Demonstrate color change on the suggestion**
-        const tilesAfter = page.locator('button[aria-label*="Change color"]').or(page.locator('.tile'));
+        // **Demonstrate color change on the suggestion - tiles will re-appear**
+        await page.waitForTimeout(500);
+        const tilesAfter = tileLike;
         if (await tilesAfter.count() > 1) {
             const secondTile = tilesAfter.nth(1);
             await secondTile.hover();
-            await secondTile.click(); // First tap
+            await secondTile.click(); // grey → yellow
             await page.waitForTimeout(500);
-            await secondTile.click(); // Second tap
+            await secondTile.click(); // yellow → green
             await page.waitForTimeout(500);
         }
     }
@@ -261,8 +279,8 @@ test('record video', async () => {
     }
 
     // **Use multiple strategies to find ALL reveal buttons**
-    // Strategy 1: Text-based locator (most reliable for Next.js)
-    const revealButtons = page.locator('button').filter({ hasText: 'Reveal' });
+    // Strategy 1: Exact text match "Reveal Answers" (from AnswerDisplay.tsx line 107)
+    const revealButtons = page.locator('button').filter({ hasText: 'Reveal Answers' });
     const count = await revealButtons.count();
 
     console.log(`Found ${count} reveal buttons using text locator`);
@@ -304,7 +322,7 @@ test('record video', async () => {
         }
     } else {
         console.warn("No reveal buttons found - trying alternative selectors");
-        // Fallback: try role-based selector
+        // Fallback: try partial text match
         const fallbackButtons = page.getByRole('button', { name: /Reveal/i });
         const fallbackCount = await fallbackButtons.count();
         console.log(`Fallback found ${fallbackCount} buttons`);
