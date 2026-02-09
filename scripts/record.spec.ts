@@ -165,18 +165,20 @@ test('record video', async () => {
     // Wait for tiles to appear (they render based on input)
     await page.waitForTimeout(500);
 
-    // Find tiles - they're buttons that contain letters and have specific color classes
-    // Looking for buttons with bg-slate-500 (grey), bg-amber-400 (yellow), bg-emerald-500 (green)
-    const tileLike = page.locator('button').filter({ has: page.locator(':text-matches("[TRADE]", "i")') }).or(
-        page.locator('button').filter({ hasText: /^[A-Z]$/ })
-    ).or(
-        page.locator('div.flex.justify-center.gap-2 button') // the tiles container
-    );
+    // Find tiles - they're buttons with w-14 h-14 or w-16 h-16 classes (from Solver.tsx line 294)
+    // These are the letter tile buttons that cycle colors when clicked
+    const tileLike = page.locator('button.w-14.h-14, button.w-16.h-16').filter({
+        hasNotText: 'Letters' // Exclude word length buttons
+    });
 
     const tileCount = await tileLike.count();
-    console.log(`Found ${tileCount} potential tile buttons`);
+    console.log(`Found ${tileCount} tile buttons`);
 
-    if (tileCount > 0) {
+    // Assuming a 5-letter word was typed, so we expect 5 tiles.
+    // If less than 5, it might be an issue, but we proceed if at least one is found.
+    const wordLength = 5;
+    if (tileCount >= wordLength || tileCount > 0) {
+
         // Click first letter tile to cycle colors
         // Cycle: absent (grey bg-slate-500) → present (yellow bg-amber-400) → correct (green bg-emerald-500)
         const firstTile = tileLike.first();
