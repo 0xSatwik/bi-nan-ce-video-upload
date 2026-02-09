@@ -56,7 +56,10 @@ def get_authenticated_service():
         elif os.path.exists("client_secret.json"):
             print("Starting interactive authentication flow...")
             flow = InstalledAppFlow.from_client_secrets_file("client_secret.json", SCOPES)
-            creds = flow.run_local_server(port=0)
+            # Use run_local_server() with open_browser=False.
+            # This prints the URL, so you can copy-paste it into any browser.
+            # The browser will then redirect to localhost, which this script listens for.
+            creds = flow.run_local_server(port=0, open_browser=False)
             
             # Save the credentials for the next run
             with open("token.json", "w") as token:
@@ -174,3 +177,5 @@ if __name__ == "__main__":
                 print(f"Failed to upload video: {e}")
     else:
         print("No video file found to upload.")
+        print("Running authentication only (to generate token)...")
+        get_authenticated_service()

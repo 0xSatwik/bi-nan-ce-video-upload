@@ -23,17 +23,23 @@ To enable automatic YouTube uploads, you need to provide a valid OAuth2 token to
 6.  Download the JSON file and save it as `client_secret.json` in the `binance-word-of-the-day` folder.
 
 #### Step 2: Generate Token Locally
-1.  Install dependencies:
+1.  Open your terminal.
+2.  Navigate to the project folder:
+    ```bash
+    cd binance-word-of-the-day
+    ```
+3.  Install dependencies:
     ```bash
     pip install -r requirements.txt
     ```
-2.  Run the upload script locally to authenticate:
+4.  Run the upload script locally to authenticate:
     ```bash
     python scripts/upload_youtube.py
     ```
-3.  A browser window will open. Log in with your YouTube/Google account and allow access.
-4.  The script will verify authentication and generate a `token.json` file.
-    - **Note:** If you see a "Google hasn't verified this app" warning, click "Advanced" -> "Go to [Project Name] (unsafe)" because this is your own personal app.
+5.  A link will be displayed in the terminal. **Copy and paste it into your browser.**
+6.  Log in with your YouTube/Google account and allow access.
+7.  The browser will attempt to redirect to `localhost`. **This is normal.**
+8.  The script will detect the authorization and automatically generate a `token.json` file.
 
 #### Step 3: Configure GitHub Secrets
 1.  Open the `token.json` file and copy its entire content.
