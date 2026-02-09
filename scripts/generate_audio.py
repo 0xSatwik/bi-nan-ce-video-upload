@@ -30,6 +30,45 @@ def generate_audio():
 
     timing = {}
 
+    # Fetch daily answers from API
+    import requests
+    try:
+        print("Fetching daily answers...")
+        response = requests.get("https://wodl-scraper.moneydropcrypto.workers.dev/today", timeout=10)
+        if response.status_code == 200:
+            data = response.json()
+            if data and isinstance(data, list) and len(data) > 0:
+                theme = data[0].get("theme", "Crypto")
+                answer_text = f" Today's theme is {theme}. "
+                
+                for item in data:
+                    length = item.get("word_length")
+                    words_str = item.get("words", "[]")
+                    try:
+                        words = json.loads(words_str)
+                        if words:
+                            # Join words with "or" if multiple, or just list them
+                            if len(words) > 1:
+                                words_joined = ", ".join(words[:-1]) + " or " + words[-1]
+                            else:
+                                words_joined = words[0]
+                            
+                            answer_text += f"For {length} letters, the answer is {words_joined}. "
+                    except:
+                        continue
+                
+                print(f"Generated Answer Text: {answer_text}")
+                
+                # Append to revela_answers scene
+                for scene in scenes:
+                    if scene["id"] == "reveal_answers":
+                        scene["text"] += answer_text
+                        break
+        else:
+            print(f"Failed to fetch answers: {response.status_code}")
+    except Exception as e:
+        print(f"Error fetching answers: {e}")
+
     for scene in scenes:
         text = scene["text"]
         scene_id = scene["id"]
